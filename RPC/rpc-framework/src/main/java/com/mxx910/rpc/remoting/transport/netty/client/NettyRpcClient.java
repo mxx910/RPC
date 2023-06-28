@@ -80,20 +80,21 @@ public class NettyRpcClient implements RpcRequestTransport {
     }
     @Override
     public Object sendRpcRequest(RpcRequest rpcRequest) {
-        System.out.println("被调用");
-        // build return value
+
+        //创建请求标识Future
         CompletableFuture<RpcResponse<Object>> resultFuture = new CompletableFuture<>();
-        // get server address
+        // 获取服务地址
         InetSocketAddress inetSocketAddress = serviceDiscovery.lookupService(rpcRequest);
-        // get  server address related channel
+        // 获取请求对应的channel
         Channel channel = getChannel(inetSocketAddress);
         if (channel.isActive()) {
-            // put unprocessed request
+            // 将请求放入unprocessedRequests 标识请求已经开始但未完成
             unprocessedRequests.put(rpcRequest.getRequestId(), resultFuture);
             RpcMessage rpcMessage = RpcMessage.builder().data(rpcRequest)
                     .codec(SerializationTypeEnum.KYRO.getCode())
                     .compress(CompressTypeEnum.GZIP.getCode())
                     .messageType(RpcConstants.REQUEST_TYPE).build();
+            // 发送请求
             channel.writeAndFlush(rpcMessage).addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {
                     log.info("client send message: [{}]", rpcMessage);

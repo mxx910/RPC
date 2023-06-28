@@ -45,22 +45,20 @@ public class RpcClientProxy implements InvocationHandler {
     }
 
     /**
-     * get the proxy object
+     * 获取代理对象
      */
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Class<T> clazz) {
         return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class<?>[]{clazz}, this);
     }
 
-    /**
-     * This method is actually called when you use a proxy object to call a method.
-     * The proxy object is the object you get through the getProxy method.
-     */
+
     @SneakyThrows
     @SuppressWarnings("unchecked")
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) {
         log.info("invoked method: [{}]", method.getName());
+
         RpcRequest rpcRequest = RpcRequest.builder().methodName(method.getName())
                 .parameters(args)
                 .interfaceName(method.getDeclaringClass().getName())
@@ -71,7 +69,9 @@ public class RpcClientProxy implements InvocationHandler {
                 .build();
         RpcResponse<Object> rpcResponse = null;
         if (rpcRequestTransport instanceof NettyRpcClient) {
+            //  发送RPC请求
             CompletableFuture<RpcResponse<Object>> completableFuture = (CompletableFuture<RpcResponse<Object>>) rpcRequestTransport.sendRpcRequest(rpcRequest);
+           // 通过CompletableFuture直接获取请求结果
             rpcResponse = completableFuture.get();
         }
 

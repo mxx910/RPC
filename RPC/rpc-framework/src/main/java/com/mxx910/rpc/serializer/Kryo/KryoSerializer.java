@@ -33,8 +33,6 @@ public class KryoSerializer implements Serializer {
 
     @Override
     public byte[] serialize(Object obj) {
-        System.out.println(obj);
-//        System.exit(1);
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
              Output output = new Output(byteArrayOutputStream)) {
             Kryo kryo = kryoThreadLocal.get();
@@ -43,7 +41,6 @@ public class KryoSerializer implements Serializer {
             kryoThreadLocal.remove();
             return output.toBytes();
         } catch (Exception e) {
-            System.out.println("!!!!!!"+e.getMessage());
             throw new SerializeException("Serialization failed");
         }
     }

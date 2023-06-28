@@ -68,8 +68,11 @@ public class NettyRpcServer {
                             // 30 秒之内没有收到客户端请求的话就关闭连接
                             ChannelPipeline p = ch.pipeline();
                             p.addLast(new IdleStateHandler(30, 0, 0, TimeUnit.SECONDS));
+                            // 编码器
                             p.addLast(new RpcMessageEncoder());
+                            // 解码器
                             p.addLast(new RpcMessageDecoder());
+                            // 设置请求处理器
                             p.addLast(serviceHandlerGroup, new NettyRpcServerHandler());
                         }
                     });
@@ -77,15 +80,13 @@ public class NettyRpcServer {
             // 等待服务端监听端口关闭
             f.channel().closeFuture().sync();
         } catch (InterruptedException e) {
-        log.error("occur exception when start server:", e);
-    } finally {
-        log.error("shutdown bossGroup and workerGroup");
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
-        serviceHandlerGroup.shutdownGracefully();
-    }
-
-
+            log.error("occur exception when start server:", e);
+        } finally {
+            log.error("shutdown bossGroup and workerGroup");
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+            serviceHandlerGroup.shutdownGracefully();
+        }
     }
 
 }

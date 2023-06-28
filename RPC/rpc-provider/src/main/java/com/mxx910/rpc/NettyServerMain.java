@@ -14,16 +14,11 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 @RpcScan(basePackage = {"mxx910.mxx910.rpc"})
 public class NettyServerMain {
     public static void main(String[] args) {
-        // Register service via annotation
+
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(NettyServerMain.class);
+        // 从Bean中获取nettyRpc服务端
         NettyRpcServer nettyRpcServer = (NettyRpcServer) applicationContext.getBean("nettyRpcServer");
-        // Register service manually
-        HelloService helloService2 = new HelloServiceImpl();
-        RpcServiceConfig rpcServiceConfig = RpcServiceConfig.builder()
-                .group("test2").version("version2").service(helloService2).build();
-        nettyRpcServer.registerService(rpcServiceConfig);
+        // 开启端口
         nettyRpcServer.start();
-
-
     }
 }

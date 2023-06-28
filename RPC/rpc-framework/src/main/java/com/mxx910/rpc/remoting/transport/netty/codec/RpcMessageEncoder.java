@@ -26,28 +26,30 @@ public class RpcMessageEncoder extends MessageToByteEncoder<RpcMessage> {
     @Override
     protected void encode(ChannelHandlerContext ctx, RpcMessage rpcMessage, ByteBuf out) {
         try {
+            // 写入魔法值
             out.writeBytes(RpcConstants.MAGIC_NUMBER);
+            // 写入版本信息
             out.writeByte(RpcConstants.VERSION);
-            // leave a place to write the value of full length
+            // 留出4byte的空间用于写入数据包长度
             out.writerIndex(out.writerIndex() + 4);
             byte messageType = rpcMessage.getMessageType();
             out.writeByte(messageType);
             out.writeByte(rpcMessage.getCodec());
             out.writeByte(CompressTypeEnum.GZIP.getCode());
             out.writeInt(ATOMIC_INTEGER.getAndIncrement());
-            // build full length
+            // 准备写入数据字节
             byte[] bodyBytes = null;
             int fullLength = RpcConstants.HEAD_LENGTH;
-            // if messageType is not heartbeat message,fullLength = head length + body length
+           // 如果是心跳数据包则不需要写入数据
             if (messageType != RpcConstants.HEARTBEAT_REQUEST_TYPE
                     && messageType != RpcConstants.HEARTBEAT_RESPONSE_TYPE) {
-                // serialize the object
+                // 序列化对象
                 String codecName = SerializationTypeEnum.getName(rpcMessage.getCodec());
                 log.info("codec name: [{}] ", codecName);
                 Serializer serializer = ExtensionLoader.getExtensionLoader(Serializer.class)
                         .getExtension(codecName);
                 bodyBytes = serializer.serialize(rpcMessage.getData());
-                // compress the bytes
+                // 压缩数据包
                 String compressName = CompressTypeEnum.getName(rpcMessage.getCompress());
                 Compress compress = ExtensionLoader.getExtensionLoader(Compress.class)
                         .getExtension(compressName);
@@ -59,16 +61,15 @@ public class RpcMessageEncoder extends MessageToByteEncoder<RpcMessage> {
                 out.writeBytes(bodyBytes);
             }
             int writeIndex = out.writerIndex();
+            // 重新定位写入指针地址
             out.writerIndex(writeIndex - fullLength + RpcConstants.MAGIC_NUMBER.length + 1);
+            // 写入总长度
             out.writeInt(fullLength);
             out.writerIndex(writeIndex);
         } catch (Exception e) {
             log.error("Encode request error!", e);
         }
-
     }
-
-
 }
 
 

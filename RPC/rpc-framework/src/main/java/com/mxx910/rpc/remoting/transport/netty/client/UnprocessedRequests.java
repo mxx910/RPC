@@ -12,12 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * @description:
  */
 public class UnprocessedRequests {
+    // 存储每个RPC请求对象和对应的 CompletableFuture 对象
     private static final Map<String, CompletableFuture<RpcResponse<Object>>> UNPROCESSED_RESPONSE_FUTURES = new ConcurrentHashMap<>();
     public void put(String requestId, CompletableFuture<RpcResponse<Object>> future) {
         UNPROCESSED_RESPONSE_FUTURES.put(requestId, future);
     }
+
     public void complete(RpcResponse<Object> rpcResponse) {
         CompletableFuture<RpcResponse<Object>> future = UNPROCESSED_RESPONSE_FUTURES.remove(rpcResponse.getRequestId());
+        // 当RPC请求完成时调用complete方法标识请求已经完成
         if (null != future) {
             future.complete(rpcResponse);
         } else {
