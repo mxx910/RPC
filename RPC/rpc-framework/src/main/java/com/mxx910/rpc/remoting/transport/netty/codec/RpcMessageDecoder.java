@@ -51,6 +51,7 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         Object decoded = super.decode(ctx, in);
         if (decoded instanceof ByteBuf) {
             ByteBuf frame = (ByteBuf) decoded;
+            // 如果传输的数据包长度小于16 则说明数据包不完整或者没有需要传输的数据,反之则存在数据需要解包
             if (frame.readableBytes() >= RpcConstants.TOTAL_LENGTH) {
                 try {
                     return decodeFrame(frame);
@@ -66,13 +67,15 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         return decoded;
     }
 
-
+    /**
+     * 解包
+     * @param in
+     * @return
+     */
     private Object decodeFrame(ByteBuf in) {
-        // note: must read ByteBuf in order
         checkMagicNumber(in);
         checkVersion(in);
         int fullLength = in.readInt();
-        // build RpcMessage object
         byte messageType = in.readByte();
         byte codecType = in.readByte();
         byte compressType = in.readByte();
@@ -93,12 +96,12 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         if (bodyLength > 0) {
             byte[] bs = new byte[bodyLength];
             in.readBytes(bs);
-            // decompress the bytes
+            // 解压
             String compressName = CompressTypeEnum.getName(compressType);
             Compress compress = ExtensionLoader.getExtensionLoader(Compress.class)
                     .getExtension(compressName);
             bs = compress.decompress(bs);
-            // deserialize the object
+            // 反序列化
             String codecName = SerializationTypeEnum.getName(rpcMessage.getCodec());
             log.info("codec name: [{}] ", codecName);
             Serializer serializer = ExtensionLoader.getExtensionLoader(Serializer.class)
@@ -116,7 +119,7 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
     }
 
     private void checkVersion(ByteBuf in) {
-        // read the version and compare
+        // 检查版本是否匹配
         byte version = in.readByte();
         if (version != RpcConstants.VERSION) {
             throw new RuntimeException("version isn't compatible" + version);
@@ -124,7 +127,7 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
     }
 
     private void checkMagicNumber(ByteBuf in) {
-        // read the first 4 bit, which is the magic number, and compare
+        // 检查魔法值是否匹配
         int len = RpcConstants.MAGIC_NUMBER.length;
         byte[] tmp = new byte[len];
         in.readBytes(tmp);

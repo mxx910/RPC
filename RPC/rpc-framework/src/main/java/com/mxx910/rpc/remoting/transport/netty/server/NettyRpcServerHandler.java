@@ -31,6 +31,12 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
         this.rpcRequestHandler = SingletonFactory.getInstance(RpcRequestHandler.class);
     }
 
+
+    /**
+     * 处理解码后的数据
+     * @param ctx
+     * @param msg
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         try {
@@ -45,11 +51,12 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
                     rpcMessage.setData(RpcConstants.PONG);
                 } else {
                     RpcRequest rpcRequest = (RpcRequest) ((RpcMessage) msg).getData();
-                    // Execute the target method (the method the client needs to execute) and return the method result
+                    // 处理请求
                     Object result = rpcRequestHandler.handle(rpcRequest);
                     log.info(String.format("server get result: %s", result.toString()));
                     rpcMessage.setMessageType(RpcConstants.RESPONSE_TYPE);
                     if (ctx.channel().isActive() && ctx.channel().isWritable()) {
+                        // 写入请求执行结果结果
                         RpcResponse<Object> rpcResponse = RpcResponse.success(result, rpcRequest.getRequestId());
                         rpcMessage.setData(rpcResponse);
                     } else {
@@ -58,6 +65,7 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
                         log.error("not writable now, message dropped");
                     }
                 }
+                // 返回结果
                 ctx.writeAndFlush(rpcMessage).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
             }
         } finally {

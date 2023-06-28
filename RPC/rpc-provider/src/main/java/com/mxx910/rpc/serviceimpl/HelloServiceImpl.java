@@ -4,6 +4,7 @@ import com.mxx910.rpc.Hello;
 import com.mxx910.rpc.HelloService;
 import com.mxx910.rpc.annotation.RpcService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * @author: mxx910
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
  * @description:
  */
 @Slf4j
+@Component
 @RpcService(group = "test1", version = "version1")
 public class HelloServiceImpl implements HelloService {
     static {

@@ -41,6 +41,7 @@ public class NettyRpcClientHandler extends ChannelInboundHandlerAdapter {
                 if (messageType == RpcConstants.HEARTBEAT_RESPONSE_TYPE) {
                     log.info("heart [{}]", tmp.getData());
                 } else if (messageType == RpcConstants.RESPONSE_TYPE) {
+                    // 将服务端的请求结果写入rpcResponse 并调用unprocessedRequests的complete方法 标识请求已经完成
                     RpcResponse<Object> rpcResponse = (RpcResponse<Object>) tmp.getData();
                     unprocessedRequests.complete(rpcResponse);
                 }
